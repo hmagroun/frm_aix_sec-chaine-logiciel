@@ -150,18 +150,18 @@ IP.1 = 192.168.56.22
 
 ```bash
 # 2. Génération de la nouvelle clé privée
-openssl genrsa -out $SERVER_NAME.key 2048
+openssl genrsa -out app.local.key 2048
 
 # 3. Création du CSR avec le fichier de configuration SAN
-openssl req -new -key $SERVER_NAME.key -out $SERVER_NAME.csr -config app_local.cnf
+openssl req -new -key app.local.key -out app.local.csr -config app_local.cnf
 
 # 4. Déplacement Sécurisé de la Clé Privée
-sudo mv $SERVER_NAME.key /etc/pki-local/
-sudo chown root:ssl-cert /etc/pki-local/$SERVER_NAME.key
-sudo chmod 640 /etc/pki-local/$SERVER_NAME.key
+sudo mv app.local.key /etc/pki-local/
+sudo chown root:ssl-cert /etc/pki-local/app.local.key
+sudo chmod 640 /etc/pki-local/app.local.key
 
 # 5. Transfert du CSR et du CNF vers la CA
-scp $SERVER_NAME.csr useradm@root-ca.local:/tmp/
+scp app.local.csr useradm@root-ca.local:/tmp/
 scp app_local.cnf useradm@root-ca.local:/tmp/
 ```
 
@@ -174,14 +174,14 @@ export SERVER_NAME="app.local"
 cd /etc/pki-local/
 
 # Signature avec inclusion des extensions SAN (req_ext)
-sudo openssl x509 -req -in /tmp/$SERVER_NAME.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out $SERVER_NAME.crt -days 730 -sha256 -extensions req_ext -extfile /tmp/app_local.cnf
+sudo openssl x509 -req -in /tmp/app.local.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out app.local.crt -days 730 -sha256 -extensions req_ext -extfile /tmp/app_local.cnf
 
 # Nettoyage
 sudo rm /tmp/app_local.cnf
 
 # Permissions finales
-sudo chown root:root $SERVER_NAME.crt
-sudo chmod 644 /etc/pki-local/$SERVER_NAME.crt
+sudo chown root:root app.local.crt
+sudo chmod 644 /etc/pki-local/app.local.crt
 ```
 
 ### 5.3. Retour du Certificat et Distribution de la CA
@@ -226,6 +226,20 @@ Sur la VM **`app.local`** :
 
 1.  **Configuration du Virtual Host SSL :**
     Vérifiez et modifiez `/etc/apache2/sites-available/default-ssl.conf` pour qu'il pointe vers les certificats signés.
+    Vous devez y spécifier les directives SSL suivantes :
+
+```apache
+<VirtualHost *:443>
+    # ... autres directives de Virtual Host ...
+
+    SSLEngine on
+    SSLCertificateFile    /etc/pki-local/app.local.crt
+    SSLCertificateKeyFile /etc/pki-local/app.local.key
+
+    # ...
+</VirtualHost>
+```
+
 
 2.  **Redirection HTTP vers HTTPS :**
     Vérifiez et modifiez `/etc/apache2/sites-available/000-default.conf` :
