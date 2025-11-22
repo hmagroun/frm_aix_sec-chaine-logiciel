@@ -43,7 +43,7 @@ spec:
         - containerPort: 80
         # Commande qui modifie la page d'accueil pour afficher l'Hostname du Pod
         command: ["/bin/sh", "-c"]
-        args: ["echo 'Serveur Nginx ID: $HOSTNAME' > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"]
+        args: ['echo "Serveur Nginx ID: $HOSTNAME" > /usr/share/nginx/html/index.html && nginx -g "daemon off;"']
 ```
 
 ### B. Application du Déploiement
